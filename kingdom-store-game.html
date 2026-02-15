@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>國度商店 — 環遊世界文化大挑戰</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Fredoka:wght@400;600;700&family=Bangers&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a1628;
+  --gold: #f5c842;
+  --gold-dark: #d4a017;
+  --asia: #e74c3c;
+  --europe: #3498db;
+  --africa: #e67e22;
+  --americas: #2ecc71;
+  --oceania: #9b59b6;
+  --correct: #27ae60;
+  --wrong: #c0392b;
+  --bg-dark: #0d1b2a;
+  --bg-card: #1b2838;
+  --text-light: #ecf0f1;
+  --text-muted: #95a5a6;
+  --radius: 16px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { 
+  width:100%; height:100%; overflow:hidden;
+  font-family:'Noto Sans TC','Fredoka',sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-light);
+}
+.screen { 
+  display:none; width:100%; height:100%; 
+  position:absolute; top:0; left:0;
+  overflow-y:auto; overflow-x:hidden;
+}
+.screen.active { display:flex; flex-direction:column; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(60px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+@keyframes bounceIn { 0%{transform:scale(0);opacity:0} 50%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+@keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(245,200,66,0.3)} 50%{box-shadow:0 0 40px rgba(245,200,66,0.6)} }
+@keyframes confetti-fall { 0%{transform:translateY(-100vh) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+@keyframes fillBar { from{width:0%} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes stampIn { 0%{transform:scale(3) rotate(-30deg);opacity:0} 60%{transform:scale(0.9) rotate(5deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+@keyframes timerPulse { 0%,100%{color:#fff} 50%{color:#e74c3c;transform:scale(1.1)} }
+@keyframes correctFlash { 0%{background:var(--correct)} 100%{background:transparent} }
+@keyframes countDown { 0%{transform:scale(2);opacity:0} 50%{transform:scale(1);opacity:1} 100%{transform:scale(0.8);opacity:0} }
+
+/* ===== HOME SCREEN ===== */
+#home {
+  background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 50%, #0d1b2a 100%);
+  align-items:center; justify-content:center; text-align:center;
+  position:relative;
+}
+#home::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(circle at 30% 40%, rgba(245,200,66,0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(155,89,182,0.06) 0%, transparent 50%);
+}
+.home-content { position:relative; z-index:1; padding:20px; }
+.game-logo {
+  font-family:'Bangers',cursive; font-size:clamp(3rem,8vw,6rem);
+  color:var(--gold); text-shadow: 3px 3px 0 var(--gold-dark), 6px 6px 0 rgba(0,0,0,0.3);
+  line-height:1.1; margin-bottom:8px;
+  animation: float 3s ease-in-out infinite;
+}
+.game-subtitle {
+  font-size:clamp(1rem,2.5vw,1.5rem); color:var(--text-muted);
+  margin-bottom:40px; letter-spacing:2px;
+}
+.role-buttons { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+.role-btn {
+  padding:20px 40px; border-radius:var(--radius); border:3px solid var(--gold);
+  background: rgba(245,200,66,0.1); color:var(--gold);
+  font-size:1.3rem; font-weight:700; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+  transition:all 0.3s; position:relative; overflow:hidden;
+}
+.role-btn:hover { background:var(--gold); color:var(--navy); transform:translateY(-3px); box-shadow:var(--shadow); }
+.role-btn .role-icon { font-size:2rem; display:block; margin-bottom:8px; }
+.role-btn .role-desc { font-size:0.85rem; color:var(--text-muted); font-weight:400; }
+.role-btn:hover .role-desc { color:var(--navy); }
+
+/* ===== ROOM SETUP ===== */
+#room-setup {
+  background: linear-gradient(135deg, #0a1628, #1a2a4a);
+  align-items:center; justify-content:center; text-align:center; padding:20px;
+}
+.setup-card {
+  background:var(--bg-card); border-radius:var(--radius); padding:40px;
+  box-shadow:var(--shadow); max-width:500px; width:100%;
+  animation: fadeIn 0.5s ease;
+}
+.setup-card h2 { font-family:'Bangers',cursive; font-size:2rem; color:var(--gold); margin-bottom:20px; }
+.setup-input {
+  width:100%; padding:16px; border-radius:12px; border:2px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.05); color:#fff; font-size:1.2rem; text-align:center;
+  font-family:'Fredoka',sans-serif; letter-spacing:4px; margin-bottom:16px;
+  transition:border-color 0.3s;
+}
+.setup-input:focus { outline:none; border-color:var(--gold); }
+.setup-input::placeholder { color:var(--text-muted); letter-spacing:1px; font-size:1rem; }
+.btn-primary {
+  padding:14px 32px; border-radius:12px; border:none;
+  background:var(--gold); color:var(--navy); font-size:1.1rem;
+  font-weight:700; cursor:pointer; font-family:'Noto Sans TC',sans-serif;
+  transition:all 0.3s; width:100%;
+}
+.btn-primary:hover { background:#ffe066; transform:translateY(-2px); box-shadow:0 4px 16px rgba(245,200,66,0.4); }
+.btn-secondary {
+  padding:10px 24px; border-radius:10px; border:2px solid var(--text-muted);
+  background:transparent; color:var(--text-muted); font-size:0.95rem;
+  cursor:pointer; font-family:'Noto Sans TC',sans-serif;
+  transition:all 0.3s; margin-top:12px;
+}
+.btn-secondary:hover { border-color:var(--gold); color:var(--gold); }
+.room-code-display {
+  font-family:'Bangers',cursive; font-size:3rem; color:var(--gold);
+  letter-spacing:8px; padding:16px; margin:16px 0;
+  border:3px dashed var(--gold); border-radius:12px;
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* ===== TEAM SELECT ===== */
+#team-select {
+  background: linear-gradient(135deg, #0a1628, #1a2a4a);
+  align-items:center; justify-content:center; padding:20px;
+}
+.team-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
+  max-width:600px; width:100%; margin-top:24px;
+}
+.team-card {
+  padding:24px 16px; border-radius:var(--radius); border:3px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.05); text-align:center;
+  cursor:pointer; transition:all 0.3s; position:relative;
+}
+.team-card:hover { transform:translateY(-4px); border-color:var(--gold); background:rgba(245,200,66,0.1); }
+.team-card.selected { border-color:var(--gold); background:rgba(245,200,66,0.2); }
+.team-card .team-emoji { font-size:2.5rem; margin-bottom:8px; display:block; }
+.team-card .team-name { font-weight:700; font-size:1.2rem; }
+
+/* ===== TEACHER DASHBOARD ===== */
+#teacher-dashboard {
+  background: var(--bg-dark); padding:0;
+}
+.dashboard-header {
+  background: linear-gradient(90deg, #0d1b2a, #1a2a4a);
+  padding:12px 24px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:2px solid rgba(245,200,66,0.2); flex-shrink:0;
+}
+.dash-title { font-family:'Bangers',cursive; font-size:1.5rem; color:var(--gold); }
+.dash-room-code { 
+  font-family:'Fredoka',sans-serif; font-size:1rem; 
+  background:rgba(245,200,66,0.15); color:var(--gold);
+  padding:6px 16px; border-radius:8px; letter-spacing:3px;
+}
+.dashboard-body {
+  display:grid; grid-template-columns:1fr 320px; gap:0;
+  flex:1; overflow:hidden; min-height:0;
+}
+.map-section {
+  padding:20px; overflow-y:auto;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.continent-map {
+  display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr);
+  gap:16px; max-width:800px; width:100%;
+}
+.continent-card {
+  border-radius:var(--radius); padding:24px 16px; text-align:center;
+  position:relative; overflow:hidden; cursor:pointer;
+  transition:all 0.3s; min-height:140px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.continent-card::before {
+  content:''; position:absolute; inset:0; opacity:0.15;
+  background:radial-gradient(circle at 50% 50%, currentColor, transparent 70%);
+}
+.continent-card:hover { transform:translateY(-4px); }
+.continent-card[data-continent="asia"] { background:rgba(231,76,60,0.15); border:2px solid rgba(231,76,60,0.4); color:var(--asia); }
+.continent-card[data-continent="europe"] { background:rgba(52,152,219,0.15); border:2px solid rgba(52,152,219,0.4); color:var(--europe); }
+.continent-card[data-continent="africa"] { background:rgba(230,126,34,0.15); border:2px solid rgba(230,126,34,0.4); color:var(--africa); }
+.continent-card[data-continent="americas"] { background:rgba(46,204,113,0.15); border:2px solid rgba(46,204,113,0.4); color:var(--americas); }
+.continent-card[data-continent="oceania"] { background:rgba(155,89,182,0.15); border:2px solid rgba(155,89,182,0.4); color:var(--oceania); grid-column:2; }
+.continent-emoji { font-size:2.5rem; margin-bottom:8px; }
+.continent-name { font-weight:700; font-size:1.1rem; color:var(--text-light); }
+.continent-countries { font-size:0.8rem; color:var(--text-muted); margin-top:4px; }
+
+/* Sidebar leaderboard */
+.sidebar {
+  background:#111d2e; border-left:2px solid rgba(245,200,66,0.15);
+  padding:20px; overflow-y:auto;
+}
+.sidebar-title {
+  font-family:'Bangers',cursive; font-size:1.4rem; color:var(--gold);
+  text-align:center; margin-bottom:20px; letter-spacing:2px;
+}
+.team-row {
+  background:rgba(255,255,255,0.04); border-radius:12px;
+  padding:12px; margin-bottom:12px; transition:all 0.3s;
+}
+.team-row-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.team-row-name { font-weight:700; font-size:1rem; }
+.team-row-score { font-family:'Fredoka',sans-serif; font-size:0.9rem; color:var(--gold); }
+.hp-bar-bg {
+  height:24px; background:rgba(255,255,255,0.08); border-radius:12px;
+  overflow:hidden; position:relative;
+}
+.hp-bar-fill {
+  height:100%; border-radius:12px; transition:width 0.8s cubic-bezier(0.4,0,0.2,1);
+  position:relative; min-width:0;
+}
+.hp-bar-fill::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+.hp-bar-text {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-size:0.75rem; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,0.5); z-index:1;
+}
+.team-stamps { display:flex; gap:4px; margin-top:8px; }
+.stamp {
+  width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:0.7rem; border:2px solid rgba(255,255,255,0.1); opacity:0.3;
+  transition:all 0.3s;
+}
+.stamp.completed { opacity:1; animation:stampIn 0.5s ease; border-color:transparent; }
+.stamp[data-c="asia"] { background:var(--asia); }
+.stamp[data-c="europe"] { background:var(--europe); }
+.stamp[data-c="africa"] { background:var(--africa); }
+.stamp[data-c="americas"] { background:var(--americas); }
+.stamp[data-c="oceania"] { background:var(--oceania); }
+
+.team-colors { --t1:#e74c3c; --t2:#3498db; --t3:#2ecc71; --t4:#e67e22; --t5:#9b59b6; --t6:#1abc9c; }
+
+/* ===== QR CODE MODAL ===== */
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8);
+  z-index:1000; align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.active { display:flex; }
+.modal-card {
+  background:var(--bg-card); border-radius:var(--radius); padding:32px;
+  max-width:800px; width:100%; max-height:90vh; overflow-y:auto;
+  animation:bounceIn 0.4s ease; position:relative;
+}
+.modal-close {
+  position:absolute; top:12px; right:16px; background:none; border:none;
+  color:var(--text-muted); font-size:1.5rem; cursor:pointer;
+}
+.modal-close:hover { color:#fff; }
+.qr-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; margin-top:20px; }
+.qr-item { text-align:center; padding:16px; background:rgba(255,255,255,0.03); border-radius:12px; }
+.qr-item canvas, .qr-item img { margin:0 auto; }
+.qr-label { margin-top:8px; font-weight:700; font-size:0.9rem; }
+
+/* ===== STUDENT MAP ===== */
+#student-map {
+  background:linear-gradient(135deg, #0a1628, #1a2a4a);
+  align-items:center; padding:20px;
+}
+.student-header {
+  width:100%; display:flex; align-items:center; justify-content:space-between;
+  padding:12px 0; flex-shrink:0;
+}
+.student-team-badge {
+  font-family:'Bangers',cursive; font-size:1.3rem; padding:6px 16px;
+  border-radius:8px; letter-spacing:2px;
+}
+.student-map-grid {
+  display:grid; grid-template-columns:repeat(2,1fr); gap:16px;
+  max-width:500px; width:100%; flex:1; align-content:center;
+}
+.student-continent-btn {
+  border-radius:var(--radius); padding:24px; text-align:center;
+  cursor:pointer; transition:all 0.3s; border:3px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.05); position:relative;
+}
+.student-continent-btn:hover:not(.locked):not(.done) { transform:scale(1.03); }
+.student-continent-btn.done { opacity:0.6; }
+.student-continent-btn.done::after {
+  content:'✅'; position:absolute; top:8px; right:8px; font-size:1.2rem;
+}
+.student-continent-btn.current { animation:pulse 1.5s infinite; border-color:var(--gold); }
+.student-continent-btn:last-child { grid-column:1/-1; max-width:50%; justify-self:center; }
+.smap-emoji { font-size:2rem; }
+.smap-name { font-weight:700; margin-top:4px; }
+.smap-status { font-size:0.8rem; color:var(--text-muted); margin-top:4px; }
+
+/* ===== QUIZ SCREEN ===== */
+#quiz-screen {
+  background:var(--bg-dark); padding:0;
+}
+.quiz-header {
+  padding:12px 20px; display:flex; align-items:center; justify-content:space-between;
+  background:rgba(0,0,0,0.3); flex-shrink:0;
+}
+.quiz-continent-badge {
+  padding:6px 14px; border-radius:8px; font-weight:700; font-size:0.9rem;
+}
+.quiz-timer {
+  font-family:'Bangers',cursive; font-size:2rem; min-width:60px; text-align:center;
+}
+.quiz-timer.urgent { animation:timerPulse 0.5s infinite; color:var(--wrong); }
+.quiz-progress {
+  height:6px; background:rgba(255,255,255,0.1); flex-shrink:0;
+}
+.quiz-progress-fill {
+  height:100%; transition:width 0.3s ease; background:var(--gold);
+}
+.quiz-body {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:24px; overflow-y:auto;
+}
+.quiz-question-num {
+  font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;
+}
+.quiz-question-text {
+  font-size:clamp(1.1rem,3vw,1.6rem); font-weight:700; text-align:center;
+  max-width:700px; line-height:1.5; margin-bottom:32px;
+  animation:fadeIn 0.4s ease;
+}
+.quiz-options {
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  max-width:700px; width:100%;
+}
+.quiz-option {
+  padding:16px 20px; border-radius:14px; border:3px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.05); cursor:pointer; transition:all 0.2s;
+  font-size:1.05rem; text-align:center; font-family:'Noto Sans TC',sans-serif;
+  display:flex; align-items:center; gap:12px; min-height:60px;
+}
+.quiz-option:hover:not(.disabled) { border-color:var(--gold); background:rgba(245,200,66,0.1); transform:translateY(-2px); }
+.quiz-option .opt-letter {
+  width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-weight:700; background:rgba(255,255,255,0.1); flex-shrink:0;
+}
+.quiz-option.correct { border-color:var(--correct); background:rgba(39,174,96,0.2); }
+.quiz-option.correct .opt-letter { background:var(--correct); }
+.quiz-option.wrong { border-color:var(--wrong); background:rgba(192,57,43,0.2); animation:shake 0.4s; }
+.quiz-option.wrong .opt-letter { background:var(--wrong); }
+.quiz-option.disabled { pointer-events:none; opacity:0.5; }
+.quiz-option.disabled.correct { opacity:1; }
+
+/* Quiz feedback */
+.quiz-feedback {
+  display:none; text-align:center; padding:20px; max-width:600px;
+  animation:fadeIn 0.4s ease;
+}
+.quiz-feedback.show { display:block; }
+.feedback-icon { font-size:3rem; margin-bottom:12px; }
+.feedback-text { font-size:1.1rem; font-weight:700; margin-bottom:12px; }
+.feedback-fact {
+  font-size:0.95rem; color:var(--text-muted); line-height:1.6;
+  background:rgba(255,255,255,0.04); padding:16px; border-radius:12px;
+  border-left:4px solid var(--gold); text-align:left;
+}
+.feedback-btn {
+  margin-top:20px; padding:12px 32px; border-radius:12px; border:none;
+  background:var(--gold); color:var(--navy); font-weight:700; font-size:1rem;
+  cursor:pointer; font-family:'Noto Sans TC',sans-serif; transition:all 0.3s;
+}
+.feedback-btn:hover { background:#ffe066; transform:translateY(-2px); }
+
+/* ===== CONTINENT COMPLETE ===== */
+#continent-complete {
+  background:var(--bg-dark); align-items:center; justify-content:center;
+  text-align:center; padding:24px; position:relative; overflow:hidden;
+}
+.complete-icon { font-size:5rem; animation:bounceIn 0.6s ease; }
+.complete-title { font-family:'Bangers',cursive; font-size:2.5rem; color:var(--gold); margin:16px 0; }
+.complete-score { font-size:1.3rem; margin-bottom:8px; }
+.complete-code {
+  font-family:'Fredoka',sans-serif; font-size:2rem; letter-spacing:4px;
+  background:rgba(245,200,66,0.15); color:var(--gold); padding:12px 24px;
+  border-radius:12px; border:2px dashed var(--gold); margin:16px 0;
+}
+.complete-hint { font-size:0.9rem; color:var(--text-muted); margin-bottom:24px; }
+
+/* ===== VICTORY ===== */
+#victory-screen {
+  background:radial-gradient(circle at 50% 30%, #1a2a4a, var(--bg-dark));
+  align-items:center; justify-content:center; text-align:center;
+  padding:24px; position:relative; overflow:hidden;
+}
+.victory-crown { font-size:6rem; animation:float 2s ease-in-out infinite; }
+.victory-title { font-family:'Bangers',cursive; font-size:clamp(2rem,6vw,4rem); color:var(--gold); margin:16px 0; text-shadow:3px 3px 0 rgba(0,0,0,0.3); }
+.victory-team { font-size:1.5rem; margin-bottom:24px; }
+.final-standings { max-width:500px; width:100%; }
+.final-row { display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:10px; margin-bottom:8px; background:rgba(255,255,255,0.05); }
+.final-rank { font-family:'Bangers',cursive; font-size:1.5rem; width:40px; text-align:center; }
+.final-rank:nth-child(1) { color:var(--gold); }
+.final-info { flex:1; text-align:left; }
+.final-name { font-weight:700; }
+.final-pts { color:var(--gold); font-size:0.9rem; }
+
+/* Confetti */
+.confetti-piece {
+  position:fixed; width:10px; height:10px; top:-20px; z-index:999;
+  animation:confetti-fall linear forwards;
+}
+
+/* ===== DASHBOARD CONFIRM PANEL ===== */
+.confirm-panel {
+  background:rgba(0,0,0,0.3); border-radius:12px; padding:16px;
+  margin-top:16px;
+}
+.confirm-panel h3 { font-size:1rem; color:var(--gold); margin-bottom:12px; }
+.confirm-row { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.confirm-select {
+  padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.05); color:#fff; font-family:'Noto Sans TC',sans-serif;
+}
+.confirm-btn {
+  padding:8px 16px; border-radius:8px; border:none;
+  background:var(--correct); color:#fff; font-weight:700; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif; transition:all 0.2s;
+}
+.confirm-btn:hover { background:#2ecc71; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width:900px) {
+  .dashboard-body { grid-template-columns:1fr; }
+  .sidebar { border-left:none; border-top:2px solid rgba(245,200,66,0.15); max-height:300px; }
+  .continent-map { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:600px) {
+  .quiz-options { grid-template-columns:1fr; }
+  .team-grid { grid-template-columns:repeat(2,1fr); }
+  .student-map-grid { grid-template-columns:1fr; }
+  .qr-grid { grid-template-columns:1fr 1fr; }
+}
+
+/* Print QR codes */
+@media print {
+  body { background:#fff !important; color:#000 !important; }
+  .screen { display:none !important; }
+  #qr-print-area { display:block !important; }
+  .qr-print-item { page-break-inside:avoid; text-align:center; margin:20px; }
+}
+#qr-print-area { display:none; }
+
+/* Tooltip */
+.tooltip {
+  position:relative;
+}
+.tooltip::after {
+  content:attr(data-tip); position:absolute; bottom:110%; left:50%; transform:translateX(-50%);
+  background:var(--navy); color:#fff; padding:6px 12px; border-radius:8px;
+  font-size:0.8rem; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity 0.2s;
+}
+.tooltip:hover::after { opacity:1; }
+
+/* Loading spinner */
+.spinner { width:40px; height:40px; border:4px solid rgba(255,255,255,0.1); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto; }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<!-- ========== SCREEN: HOME ========== -->
+<div id="home" class="screen active">
+  <div class="home-content">
+    <div class="game-logo">國度商店</div>
+    <div class="game-subtitle">🌍 環遊世界文化大挑戰 🌏</div>
+    <div class="role-buttons">
+      <button class="role-btn" onclick="goToSetup('teacher')">
+        <span class="role-icon">🏫</span>
+        教師模式
+        <span class="role-desc">建立遊戲房間 & 排行榜</span>
+      </button>
+      <button class="role-btn" onclick="goToSetup('student')">
+        <span class="role-icon">🎒</span>
+        學生模式
+        <span class="role-desc">掃 QR Code 闖關答題</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: ROOM SETUP (TEACHER) ========== -->
+<div id="room-setup" class="screen">
+  <div class="setup-card">
+    <h2>🎮 建立遊戲房間</h2>
+    <p style="color:var(--text-muted);margin-bottom:20px;">建立一個房間代碼，學生用此代碼加入遊戲</p>
+    <div id="generated-code" class="room-code-display" style="display:none;"></div>
+    <button class="btn-primary" id="create-room-btn" onclick="createRoom()">🚀 產生房間代碼</button>
+    <button class="btn-primary" id="enter-room-btn" style="display:none;" onclick="enterDashboard()">📊 進入教師控制台</button>
+    <br>
+    <button class="btn-secondary" onclick="showScreen('home')">← 返回</button>
+  </div>
+</div>
+
+<!-- ========== SCREEN: TEAM SELECT (STUDENT) ========== -->
+<div id="team-select" class="screen">
+  <div style="max-width:600px;width:100%;text-align:center;">
+    <h2 style="font-family:'Bangers',cursive;font-size:2rem;color:var(--gold);margin-bottom:8px;">選擇你的隊伍</h2>
+    <p style="color:var(--text-muted);margin-bottom:24px;">和夥伴討論後選擇你們的隊伍</p>
+    <div class="team-grid" id="team-grid"></div>
+    <button class="btn-primary" style="margin-top:24px;max-width:300px;" onclick="confirmTeam()" id="confirm-team-btn" disabled>✈️ 出發闖關！</button>
+    <br>
+    <button class="btn-secondary" onclick="showScreen('home')">← 返回</button>
+  </div>
+</div>
+
+<!-- ========== SCREEN: TEACHER DASHBOARD ========== -->
+<div id="teacher-dashboard" class="screen">
+  <div class="dashboard-header">
+    <div class="dash-title">🌍 國度商店 — 教師控制台</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="dash-room-code" id="dash-room-code"></div>
+      <button style="padding:6px 14px;border-radius:8px;border:2px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;font-family:'Noto Sans TC';font-weight:700;" onclick="showQRModal()">📱 QR碼</button>
+      <button style="padding:6px 14px;border-radius:8px;border:2px solid var(--wrong);background:transparent;color:var(--wrong);cursor:pointer;font-family:'Noto Sans TC';font-weight:700;" onclick="resetGame()">🔄 重置</button>
+    </div>
+  </div>
+  <div class="dashboard-body">
+    <div class="map-section">
+      <div class="continent-map" id="continent-map-teacher"></div>
+      <!-- Manual confirm panel -->
+      <div class="confirm-panel">
+        <h3>📋 手動確認闖關</h3>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">學生完成關卡後，在此確認該組過關</p>
+        <div class="confirm-row">
+          <select class="confirm-select" id="confirm-team-select"></select>
+          <select class="confirm-select" id="confirm-continent-select">
+            <option value="asia">🌏 亞洲</option>
+            <option value="europe">🏰 歐洲</option>
+            <option value="africa">🌍 非洲</option>
+            <option value="americas">🌎 美洲</option>
+            <option value="oceania">🏝️ 大洋洲</option>
+          </select>
+          <input type="number" class="confirm-select" id="confirm-score" placeholder="分數" min="0" max="800" style="width:80px;">
+          <button class="confirm-btn" onclick="manualConfirm()">✅ 確認過關</button>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-title">🏆 即時戰況排行榜</div>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: STUDENT MAP ========== -->
+<div id="student-map" class="screen">
+  <div class="student-header">
+    <button class="btn-secondary" onclick="showScreen('home')" style="margin:0;padding:6px 12px;font-size:0.85rem;">🏠 首頁</button>
+    <div class="student-team-badge" id="student-team-badge"></div>
+    <div id="student-score-display" style="font-family:'Bangers',cursive;font-size:1.2rem;color:var(--gold);"></div>
+  </div>
+  <h2 style="font-family:'Bangers',cursive;font-size:1.8rem;color:var(--gold);text-align:center;margin:12px 0;">選擇要闖關的大洲</h2>
+  <div class="student-map-grid" id="student-map-grid"></div>
+</div>
+
+<!-- ========== SCREEN: QUIZ ========== -->
+<div id="quiz-screen" class="screen">
+  <div class="quiz-header">
+    <div class="quiz-continent-badge" id="quiz-badge"></div>
+    <div id="quiz-q-counter" style="font-size:0.9rem;color:var(--text-muted);"></div>
+    <div class="quiz-timer" id="quiz-timer">30</div>
+  </div>
+  <div class="quiz-progress"><div class="quiz-progress-fill" id="quiz-progress-fill"></div></div>
+  <div class="quiz-body" id="quiz-body">
+    <div id="quiz-question-area">
+      <div class="quiz-question-num" id="quiz-question-num"></div>
+      <div class="quiz-question-text" id="quiz-question-text"></div>
+      <div class="quiz-options" id="quiz-options"></div>
+    </div>
+    <div class="quiz-feedback" id="quiz-feedback">
+      <div class="feedback-icon" id="feedback-icon"></div>
+      <div class="feedback-text" id="feedback-text"></div>
+      <div class="feedback-fact" id="feedback-fact"></div>
+      <button class="feedback-btn" id="feedback-btn" onclick="nextQuestion()">下一題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN: CONTINENT COMPLETE ========== -->
+<div id="continent-complete" class="screen">
+  <div class="complete-icon" id="complete-icon">🎉</div>
+  <div class="complete-title" id="complete-title">亞洲闖關成功！</div>
+  <div class="complete-score" id="complete-score"></div>
+  <div class="complete-code" id="complete-code"></div>
+  <div class="complete-hint">請舉手讓老師確認過關！</div>
+  <button class="btn-primary" style="max-width:300px;" onclick="backToStudentMap()">🗺️ 回到地圖繼續闖關</button>
+</div>
+
+<!-- ========== SCREEN: VICTORY ========== -->
+<div id="victory-screen" class="screen">
+  <div class="victory-crown">👑</div>
+  <div class="victory-title">🎊 冠軍誕生！🎊</div>
+  <div class="victory-team" id="victory-team"></div>
+  <div class="final-standings" id="final-standings"></div>
+</div>
+
+<!-- ========== QR MODAL ========== -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeQRModal()">✕</button>
+    <h2 style="font-family:'Bangers',cursive;font-size:1.8rem;color:var(--gold);text-align:center;">📱 闖關 QR 碼</h2>
+    <p style="text-align:center;color:var(--text-muted);margin:8px 0 4px;">學生掃描 QR 碼進入對應大洲的關卡</p>
+    <p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">列印提示：按 Ctrl+P 列印此頁</p>
+    <div class="qr-grid" id="qr-grid"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <button class="btn-primary" style="max-width:200px;" onclick="printQRCodes()">🖨️ 列印 QR 碼</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== COUNTDOWN OVERLAY ========== -->
+<div id="countdown-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;align-items:center;justify-content:center;flex-direction:column;">
+  <div id="countdown-num" style="font-family:'Bangers',cursive;font-size:8rem;color:var(--gold);"></div>
+  <div id="countdown-text" style="font-size:1.3rem;color:var(--text-muted);margin-top:12px;"></div>
+</div>
+
+<script>
+// =============================================
+// GAME CONFIGURATION & STATE
+// =============================================
+const TEAMS = [
+  { id:'A', name:'A組 探險家', emoji:'🦁', color:'#e74c3c' },
+  { id:'B', name:'B組 冒險王', emoji:'🐉', color:'#3498db' },
+  { id:'C', name:'C組 旅行者', emoji:'🦅', color:'#2ecc71' },
+  { id:'D', name:'D組 發現家', emoji:'🐬', color:'#e67e22' },
+  { id:'E', name:'E組 探索家', emoji:'🦋', color:'#9b59b6' },
+  { id:'F', name:'F組 開拓者', emoji:'🐢', color:'#1abc9c' }
+];
+
+const CONTINENTS = [
+  { id:'asia', name:'亞洲', emoji:'🌏', countries:'日本 🇯🇵 · 泰國 🇹🇭', color:'var(--asia)' },
+  { id:'europe', name:'歐洲', emoji:'🏰', countries:'法國 🇫🇷 · 義大利 🇮🇹', color:'var(--europe)' },
+  { id:'africa', name:'非洲', emoji:'🌍', countries:'摩洛哥 🇲🇦 · 埃及 🇪🇬', color:'var(--africa)' },
+  { id:'americas', name:'美洲', emoji:'🌎', countries:'墨西哥 🇲🇽 · 美國 🇺🇸', color:'var(--americas)' },
+  { id:'oceania', name:'大洋洲', emoji:'🏝️', countries:'澳洲 🇦🇺 · 紐西蘭 🇳🇿', color:'var(--oceania)' }
+];
+
+const TIME_PER_QUESTION = 30; // seconds
+const POINTS_CORRECT = 100;
+const POINTS_SPEED_BONUS = 50; // max bonus for fast answer
+const TOTAL_CONTINENTS = 5;
+
+// =============================================
+// QUIZ QUESTIONS DATABASE (40+ questions)
+// =============================================
+const QUESTIONS = {
+  asia: [
+    { q:'金平糖（Konpeitō）最早是從哪個國家傳到日本的？', opts:['葡萄牙','西班牙','荷蘭','英國'], ans:0, fact:'1569年葡萄牙傳教士把金平糖送給了戰國武將織田信長當禮物！那時候糖非常珍貴，只有貴族才吃得到。' },
+    { q:'日本駄菓子屋的貨架為什麼設計得特別矮？', opts:['節省材料','方便小孩自己拿取','地震安全','看起來比較可愛'], ans:1, fact:'駄菓子屋是專門給小朋友的零食店，架子矮矮的讓小孩可以自己挑選、學習算錢買東西，這是許多日本人的童年回憶！' },
+    { q:'做一批金平糖需要多長時間？', opts:['1小時','1天','7到13天','1個月'], ans:2, fact:'師傅在旋轉大鍋裡一層一層慢慢淋上糖漿，每顆金平糖最終會長出大約27個小突起，整個過程需要7到13天！' },
+    { q:'泰國水上市場的「船麵」碗為什麼特別小？', opts:['節省食材','小碗比較便宜','避免在船上晃動灑出來','泰國人食量小'], ans:2, fact:'老闆要在小船上同時划船、煮麵、調味、端碗、收錢！碗大了湯會灑出來，所以客人通常一次吃5到10碗，把空碗疊成小塔！' },
+    { q:'丹嫩莎朵水上市場的運河大約有多長？', opts:['5公里','15公里','32公里','50公里'], ans:2, fact:'拉瑪四世國王在1866-1868年下令挖了這條32公里長的運河，比半個台北市還長！泰國古時候所有交通都靠水路。' },
+    { q:'安帕瓦水上市場晚上最吸引人的自然奇觀是什麼？', opts:['螢火蟲同步閃爍','海豚跳水','滿天星斗','彩色月亮'], ans:0, fact:'成千上萬隻螢火蟲在紅樹林上同步閃爍，整棵樹看起來像聖誕樹一樣發光！安帕瓦社區因此獲得了2008年UNESCO遺產保護獎。' },
+    { q:'以下哪個「不是」日本駄菓子屋常見的零食？', opts:['金平糖','笛糖','仙貝','巧克力蛋糕'], ans:3, fact:'駄菓子屋的零食都非常便宜（10-100日圓），像金平糖、笛糖、仙貝、丸子串都是經典品項。巧克力蛋糕太貴啦！' },
+    { q:'日本笛糖（Fue Ramune）有什麼特別的地方？', opts:['會變色','可以吹出哨聲','有魔術效果','會在水裡溶化變汽水'], ans:1, fact:'「笛」在日文就是「笛子」的意思！笛糖中間有個小洞，放在嘴唇上吹就能發出真正的哨聲，嘗起來像汽水味！' }
+  ],
+  europe: [
+    { q:'法國法律規定傳統法棍（baguette）只能用幾種材料製作？', opts:['2種','4種','6種','不限'], ans:1, fact:'1993年「Le Décret Pain」法令規定法棍只能用麵粉、水、鹽、酵母4種材料，且必須在店裡現場揉製烘烤！' },
+    { q:'法國人每天大約吃掉多少條法棍？', opts:['100萬條','800萬條','1,600萬條','5,000萬條'], ans:2, fact:'法國每天吃掉約1,600萬條法棍，一年近60億條！等於每秒吃掉320條！而且法棍已被UNESCO列為人類非物質文化遺產。' },
+    { q:'可頌（croissant）最初是哪個國家發明的？', opts:['法國','奧地利','義大利','瑞士'], ans:1, fact:'可頌的前身是奧地利的「kipferl」月牙麵包，1838年由奧地利人August Zang帶到巴黎。法文的「viennoiserie」意思就是「來自維也納的東西」！' },
+    { q:'巴黎最佳法棍大賽的冠軍會得到什麼特別獎勵？', opts:['免費去度假','整年送法棍給總統當早餐','成為巴黎市長','上電視一整天'], ans:1, fact:'冠軍除了獲得4,000歐元獎金，還能整整一年每天早上6:30送30條新鮮法棍到愛麗舍宮給法國總統當早餐！' },
+    { q:'Gelato 和一般冰淇淋最大的差別是什麼？', opts:['顏色不同','含空氣量較少更濃密','只有巧克力口味','用塑膠碗裝'], ans:1, fact:'冰淇淋含50-70%空氣，但Gelato只有25-35%！所以Gelato更濃密滑順，脂肪含量也更低，舌頭能嘗到更濃烈的味道！' },
+    { q:'發明Gelato的Bernardo Buontalenti原本是什麼職業？', opts:['廚師','農夫','建築師兼畫家','國王'], ans:2, fact:'Buontalenti是佛羅倫斯的畫家、建築師和工程師！他為梅迪奇家族招待西班牙國王時發明了Gelato。很多佛羅倫斯冰淇淋店還有以他命名的口味！' },
+    { q:'義大利波隆那有什麼跟冰淇淋有關的特別機構？', opts:['冰淇淋法院','冰淇淋大學和博物館','冰淇淋銀行','冰淇淋動物園'], ans:1, fact:'Carpigiani Gelato Museum（2012年開幕）是全世界唯一的冰淇淋博物館，收藏超過一萬張照片！旁邊還有一所真正的冰淇淋大學，在全球有15個校區！' },
+    { q:'以下哪個「不是」法國麵包店（boulangerie）的典型特色？', opts:['條紋遮陽棚','玻璃展示櫃','霓虹招牌','金色招牌字'], ans:2, fact:'霓虹招牌是美國1950s Diner的特色！法國麵包店通常有優雅的條紋遮陽棚、金色草書招牌、透明玻璃展示櫃讓你看到所有美味的麵包糕點。' }
+  ],
+  africa: [
+    { q:'摩洛哥綜合香料「Ras el Hanout」的阿拉伯語意思是什麼？', opts:['魔法粉末','店裡最好的','沙漠之心','一百種味道'], ans:1, fact:'每個香料老闆都有自己的獨家秘方，有的混合12種香料，有的甚至混合超過100種！就像每個人的指紋一樣獨一無二。' },
+    { q:'摩洛哥 Zellige 馬賽克工匠需要學習多少年才能出師？', opts:['1年','5年','至少10年','20年'], ans:2, fact:'Zellige有超過1000年歷史。因伊斯蘭傳統不描繪人和動物，工匠用幾何圖案創造精美圖案。每片小磁磚都是用小鐵鎚手工敲碎切割的！' },
+    { q:'在摩洛哥市集（Souk）買東西，最重要的技巧是什麼？', opts:['跑得快','殺價議價','大聲喊叫','穿漂亮衣服'], ans:1, fact:'市集裡商品全部沒有標價！你要先出老闆開價的三分之一，然後像玩遊戲一樣來回議價。老闆還會請你喝薄荷茶呢！' },
+    { q:'埃及哈利利市集（Khan el-Khalili）建於哪一年？', opts:['西元800年','西元1382年','西元1600年','西元1900年'], ans:1, fact:'已超過640年歷史！更驚人的是它蓋在一座皇家墓地上面——馬穆魯克王朝打敗法蒂瑪王朝後，拆掉陵墓蓋了這個超大市集。' },
+    { q:'英文的「paper」（紙）這個字來源於什麼？', opts:['拉丁文「寫」','埃及莎草紙 papyrus','希臘文「薄」','中文「帛」'], ans:1, fact:'古埃及人約5,000年前發明了莎草紙！把尼羅河邊長到4公尺高的莎草植物莖切成薄片，一橫一直交叉排列，錘打壓平曬乾。古埃及人還用莎草做鞋子、繩子，甚至小船！' },
+    { q:'哈利利市集裡的費沙維咖啡館有什麼特別紀錄？', opts:['全球最大的咖啡館','250多年從未關過門','只賣一種咖啡','有100層樓'], ans:1, fact:'1773年開業至今超過250年，24小時營業、365天全年無休！同一個家族經營了七代。連獲得諾貝爾文學獎的埃及大作家馬赫福茲都常在裡面寫小說！' },
+    { q:'哈利利市集裡大約有多少間店舖？', opts:['200間','1,000間','超過4,000間','10,000間'], ans:2, fact:'超過4,000家店舖！是中東最大最古老的市集之一。市集裡賣的東西從銅器、玻璃瓶、莎草紙畫、香料到珠寶應有盡有。' },
+    { q:'摩洛哥市集的銅燈最特別的地方是什麼？', opts:['可以防蚊','會在牆上投射星形光影','會唱歌','比黃金還貴'], ans:1, fact:'手工鏤空的銅燈點上蠟燭後，光線透過鏤空的星形和幾何花紋，會在四周牆壁和天花板投射出夢幻的星形光影！' }
+  ],
+  americas: [
+    { q:'古代阿茲特克人在市場裡用什麼當貨幣？', opts:['貝殼','可可豆','石頭','羽毛'], ans:1, fact:'可可豆就是做巧克力的原料！在古代墨西哥巧克力就是錢！特拉特洛爾科市場每天有4萬到6萬人來逛。' },
+    { q:'墨西哥剪紙旗幟 Papel Picado 在亡靈節代表什麼元素？', opts:['水','火','風','土'], ans:2, fact:'紙旗隨風飄動時，家人相信這是亡者的靈魂已經到達的信號！製作時把40到50張薄紙疊在一起，用小鑿子和鐵鎚一次切割。' },
+    { q:'墨西哥奇幻動物 Alebrije 是怎麼被發明的？', opts:['科學實驗','藝術家發高燒做了一場夢','在森林裡真的看到了','看漫畫想到的'], ans:1, fact:'1936年藝術家Pedro Linares高燒昏迷中夢到魔法森林——長蝴蝶翅膀的驢子、長牛角的公雞——牠們不停喊著「Alebrije！」連Frida Kahlo都搶著收藏！' },
+    { q:'「奶昔」（milkshake）最早出現在1885年時，原本是什麼？', opts:['果汁','含威士忌的酒精飲料','牛奶加蜂蜜','冰淇淋加可樂'], ans:1, fact:'直到1922年Walgreens藥局員工靈機一動往麥芽牛奶裡加了兩球冰淇淋，現代冰淇淋奶昔才正式誕生！' },
+    { q:'1889年第一台投幣音樂機（點唱機前身），客人要怎麼聽音樂？', opts:['戴耳機','用橡膠管子湊耳朵聽','用喇叭放大','看默劇表演'], ans:1, fact:'客人要彎下腰把耳朵湊到四根橡膠管子上聽（像聽診器！），而且要先投一枚五分鎳幣。到1940-50年代點唱機才變成閃亮的彩色音樂機！' },
+    { q:'美國第一間「Diner」餐廳最初是用什麼改裝的？', opts:['火車車廂','馬車','帳篷','船'], ans:1, fact:'1872年Walter Scott把一輛馬車改裝成流動小餐廳，深夜賣三明治和咖啡給報社工人！後來工廠開始大量生產預製餐廳，用火車運到各地。' },
+    { q:'哪部皮克斯電影裡出現了墨西哥奇幻動物 Alebrije？', opts:['乒乓外傳','可可夜總會（Coco）','靈魂急轉彎','腦筋急轉彎'], ans:1, fact:'《可可夜總會》裡的精靈嚮導Pepita就是一隻巨大的彩色Alebrije！這部電影深入呈現了墨西哥的亡靈節文化。' },
+    { q:'以下哪個「不是」1950年代美國Diner的典型特色？', opts:['霓虹招牌','黑白格紋地板','竹子屏風','紅色皮沙發卡座'], ans:2, fact:'竹子屏風是亞洲風格的裝飾！經典Diner的標配是霓虹招牌、鍍鉻外牆、紅色皮沙發、黑白格地板和播放搖滾樂的點唱機。' }
+  ],
+  oceania: [
+    { q:'澳洲原住民「點畫」風格最初是為了什麼目的？', opts:['讓畫更漂亮','保護神聖故事的秘密','練習數學','裝飾衣服'], ans:1, fact:'1971年帕普尼亞的藝術家擔心外人看懂神聖符號，所以用一層層圓點蓋住秘密——只有知道密碼的族人才能讀懂底下的故事！' },
+    { q:'以下關於迴力鏢的說法，哪個是正確的？', opts:['全部都會飛回來','只有澳洲有迴力鏢','大多數是設計成直飛不回頭的','只能用木頭做'], ans:2, fact:'會飛回來的迴力鏢是特殊類型！大多數獵用迴力鏢是直飛不回頭的。澳洲最古老的迴力鏢有10,000年歷史，連古埃及圖坦卡門法老墓裡也找到了迴力鏢！' },
+    { q:'原住民使用天然赭石顏料作畫的歷史有多長？', opts:['1,000年','10,000年','至少65,000年','100萬年'], ans:2, fact:'這是地球上最古老的持續藝術傳統！紅色來自含鐵泥土、黃色來自黏土、白色來自管狀黏土、黑色來自木炭。北領地還發現了65,000年前的赭石「蠟筆」！' },
+    { q:'毛利傳說中，英雄毛伊用什麼「釣起」了紐西蘭北島？', opts:['一根超長釣竿','外婆的下顎骨做的魚鉤','一張大網','一首歌'], ans:1, fact:'北島至今仍叫「Te Ika-a-Māui」（毛伊之魚）！從地圖上真的可以看到霍克灣像魚鉤的形狀。南島則被說成是毛伊的獨木舟。' },
+    { q:'紐西蘭南島的毛利語名稱「Te Wai Pounamu」是什麼意思？', opts:['山的國度','魚的故鄉','綠石之水','風的盡頭'], ans:2, fact:'Pounamu（綠玉/碧玉）全世界只有紐西蘭南島才有！這種寶石太珍貴了，所以整個南島都用它來命名。' },
+    { q:'按照毛利傳統，pounamu 綠玉有什麼特別規矩？', opts:['只有國王能戴','不能帶出國','不能買給自己，必須是別人送的禮物','只能在冬天佩戴'], ans:2, fact:'每一塊pounamu隨著一代一代傳下去，它的靈性力量（mana）會越來越強。所以它必須是別人送你的禮物，不能自己買！' },
+    { q:'以下哪個「不是」紐西蘭的代表性特色？', opts:['綿羊','綠玉','西瓜','奇異果'], ans:2, fact:'紐西蘭以綿羊（數量比人多！）、綠玉（pounamu）、奇異果和銀蕨聞名。西瓜不是紐西蘭的代表性特產唷！' },
+    { q:'Koru 螺旋圖騰來自什麼植物的形狀？', opts:['銀蕨嫩葉','玫瑰花苞','竹筍','仙人掌'], ans:0, fact:'Koru來自銀蕨嫩葉展開時的捲曲形狀，毛利語意思是「迴圈」，象徵新生命。紐西蘭航空直接用Koru當Logo，全黑隊也用銀蕨作隊徽！' }
+  ]
+};
+
+// =============================================
+// GAME STATE
+// =============================================
+let gameState = {
+  roomCode: '',
+  teams: {},
+  currentTeam: null,
+  currentContinent: null,
+  currentQuestionIndex: 0,
+  currentScore: 0,
+  timerInterval: null,
+  timeLeft: 0,
+  quizQuestions: [],
+  answered: false
+};
+
+// Initialize teams
+function initTeams() {
+  gameState.teams = {};
+  TEAMS.forEach(t => {
+    gameState.teams[t.id] = {
+      ...t,
+      totalScore: 0,
+      completedContinents: {},
+      progress: 0
+    };
+  });
+}
+initTeams();
+
+// =============================================
+// SCREEN MANAGEMENT
+// =============================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// =============================================
+// HOME & SETUP
+// =============================================
+function goToSetup(role) {
+  if (role === 'teacher') {
+    showScreen('room-setup');
+  } else {
+    // Check URL params first
+    const params = new URLSearchParams(window.location.search);
+    const continent = params.get('c');
+    if (continent && QUESTIONS[continent]) {
+      showScreen('team-select');
+      gameState.currentContinent = continent;
+    } else {
+      showScreen('team-select');
+    }
+    buildTeamGrid();
+  }
+}
+
+function createRoom() {
+  const code = Math.random().toString(36).substring(2,6).toUpperCase();
+  gameState.roomCode = code;
+  document.getElementById('generated-code').textContent = code;
+  document.getElementById('generated-code').style.display = 'block';
+  document.getElementById('create-room-btn').style.display = 'none';
+  document.getElementById('enter-room-btn').style.display = 'block';
+  saveState();
+}
+
+function enterDashboard() {
+  document.getElementById('dash-room-code').textContent = '房間 ' + gameState.roomCode;
+  buildDashboard();
+  showScreen('teacher-dashboard');
+}
+
+// =============================================
+// TEAM SELECTION
+// =============================================
+function buildTeamGrid() {
+  const grid = document.getElementById('team-grid');
+  grid.innerHTML = TEAMS.map(t => `
+    <div class="team-card" data-team="${t.id}" onclick="selectTeam('${t.id}')" style="--tc:${t.color}">
+      <span class="team-emoji">${t.emoji}</span>
+      <span class="team-name" style="color:${t.color}">${t.name}</span>
+    </div>
+  `).join('');
+}
+
+function selectTeam(id) {
+  document.querySelectorAll('.team-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`.team-card[data-team="${id}"]`).classList.add('selected');
+  gameState.currentTeam = id;
+  document.getElementById('confirm-team-btn').disabled = false;
+}
+
+function confirmTeam() {
+  if (!gameState.currentTeam) return;
+  const team = TEAMS.find(t => t.id === gameState.currentTeam);
+  const badge = document.getElementById('student-team-badge');
+  badge.textContent = team.emoji + ' ' + team.name;
+  badge.style.background = team.color + '33';
+  badge.style.color = team.color;
+  badge.style.border = '2px solid ' + team.color;
+
+  // If we came from a QR code with a specific continent, go straight to quiz
+  if (gameState.currentContinent && QUESTIONS[gameState.currentContinent]) {
+    startCountdown(gameState.currentContinent);
+  } else {
+    buildStudentMap();
+    showScreen('student-map');
+  }
+}
+
+// =============================================
+// STUDENT MAP
+// =============================================
+function buildStudentMap() {
+  const grid = document.getElementById('student-map-grid');
+  const teamData = gameState.teams[gameState.currentTeam];
+  const scoreEl = document.getElementById('student-score-display');
+  scoreEl.textContent = '⭐ ' + (teamData ? teamData.totalScore : 0) + ' 分';
+
+  grid.innerHTML = CONTINENTS.map(c => {
+    const done = teamData && teamData.completedContinents[c.id];
+    return `
+      <div class="student-continent-btn ${done ? 'done' : ''}" 
+           style="border-color:${done ? 'rgba(255,255,255,0.1)' : c.color}" 
+           onclick="${done ? '' : `startCountdown('${c.id}')`}">
+        <div class="smap-emoji">${c.emoji}</div>
+        <div class="smap-name">${c.name}</div>
+        <div class="smap-status">${done ? '✅ 已完成' : c.countries}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// =============================================
+// COUNTDOWN & QUIZ START
+// =============================================
+function startCountdown(continentId) {
+  gameState.currentContinent = continentId;
+  gameState.currentQuestionIndex = 0;
+  gameState.currentScore = 0;
+
+  // Shuffle questions for this continent
+  gameState.quizQuestions = [...QUESTIONS[continentId]].sort(() => Math.random() - 0.5);
+
+  const overlay = document.getElementById('countdown-overlay');
+  const numEl = document.getElementById('countdown-num');
+  const textEl = document.getElementById('countdown-text');
+  const continent = CONTINENTS.find(c => c.id === continentId);
+
+  overlay.style.display = 'flex';
+  textEl.textContent = continent.emoji + ' ' + continent.name + '站 — 準備好了嗎？';
+
+  let count = 3;
+  numEl.textContent = count;
+  numEl.style.animation = 'countDown 0.8s ease';
+
+  const cdInterval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      numEl.textContent = count;
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth;
+      numEl.style.animation = 'countDown 0.8s ease';
+    } else {
+      clearInterval(cdInterval);
+      numEl.textContent = 'GO!';
+      numEl.style.color = 'var(--correct)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        numEl.style.color = 'var(--gold)';
+        startQuiz();
+      }, 500);
+    }
+  }, 800);
+}
+
+// =============================================
+// QUIZ ENGINE
+// =============================================
+function startQuiz() {
+  showScreen('quiz-screen');
+  showQuestion();
+}
+
+function showQuestion() {
+  const qi = gameState.currentQuestionIndex;
+  const questions = gameState.quizQuestions;
+  if (qi >= questions.length) {
+    finishContinent();
+    return;
+  }
+
+  const q = questions[qi];
+  const continent = CONTINENTS.find(c => c.id === gameState.currentContinent);
+  const continentColors = { asia:'var(--asia)', europe:'var(--europe)', africa:'var(--africa)', americas:'var(--americas)', oceania:'var(--oceania)' };
+
+  // Update header
+  document.getElementById('quiz-badge').textContent = continent.emoji + ' ' + continent.name;
+  document.getElementById('quiz-badge').style.background = continentColors[continent.id].replace('var(--','').replace(')','');
+  document.getElementById('quiz-badge').style.background = getComputedStyle(document.documentElement).getPropertyValue('--'+continent.id).trim() + '33';
+  document.getElementById('quiz-badge').style.color = getComputedStyle(document.documentElement).getPropertyValue('--'+continent.id).trim();
+  document.getElementById('quiz-q-counter').textContent = `第 ${qi+1}/${questions.length} 題`;
+
+  // Progress bar
+  document.getElementById('quiz-progress-fill').style.width = ((qi / questions.length) * 100) + '%';
+
+  // Question
+  document.getElementById('quiz-question-area').style.display = 'block';
+  document.getElementById('quiz-feedback').classList.remove('show');
+  document.getElementById('quiz-question-num').textContent = `第 ${qi+1} 題，共 ${questions.length} 題`;
+  document.getElementById('quiz-question-text').textContent = q.q;
+
+  // Options
+  const letters = ['A','B','C','D'];
+  const optionsEl = document.getElementById('quiz-options');
+  optionsEl.innerHTML = q.opts.map((opt, i) => `
+    <div class="quiz-option" data-index="${i}" onclick="answerQuestion(${i})">
+      <span class="opt-letter">${letters[i]}</span>
+      <span>${opt}</span>
+    </div>
+  `).join('');
+
+  // Timer
+  gameState.timeLeft = TIME_PER_QUESTION;
+  gameState.answered = false;
+  updateTimerDisplay();
+  clearInterval(gameState.timerInterval);
+  gameState.timerInterval = setInterval(() => {
+    gameState.timeLeft--;
+    updateTimerDisplay();
+    if (gameState.timeLeft <= 0) {
+      clearInterval(gameState.timerInterval);
+      if (!gameState.answered) timeUp();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const timerEl = document.getElementById('quiz-timer');
+  timerEl.textContent = gameState.timeLeft;
+  timerEl.classList.toggle('urgent', gameState.timeLeft <= 5);
+}
+
+function answerQuestion(selectedIndex) {
+  if (gameState.answered) return;
+  gameState.answered = true;
+  clearInterval(gameState.timerInterval);
+
+  const q = gameState.quizQuestions[gameState.currentQuestionIndex];
+  const isCorrect = selectedIndex === q.ans;
+
+  // Highlight answers
+  document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+    opt.classList.add('disabled');
+    if (i === q.ans) opt.classList.add('correct');
+    if (i === selectedIndex && !isCorrect) opt.classList.add('wrong');
+  });
+
+  // Calculate score
+  let points = 0;
+  if (isCorrect) {
+    const speedBonus = Math.round((gameState.timeLeft / TIME_PER_QUESTION) * POINTS_SPEED_BONUS);
+    points = POINTS_CORRECT + speedBonus;
+    gameState.currentScore += points;
+  }
+
+  // Play sound effect (using Web Audio API)
+  playSound(isCorrect);
+
+  // Show feedback after a brief delay
+  setTimeout(() => {
+    showFeedback(isCorrect, q, points);
+  }, 800);
+}
+
+function timeUp() {
+  gameState.answered = true;
+  const q = gameState.quizQuestions[gameState.currentQuestionIndex];
+  document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+    opt.classList.add('disabled');
+    if (i === q.ans) opt.classList.add('correct');
+  });
+  setTimeout(() => {
+    showFeedback(false, q, 0, true);
+  }, 800);
+}
+
+function showFeedback(isCorrect, question, points, isTimeout = false) {
+  document.getElementById('quiz-question-area').style.display = 'none';
+  const fb = document.getElementById('quiz-feedback');
+  fb.classList.add('show');
+
+  document.getElementById('feedback-icon').textContent = isTimeout ? '⏰' : (isCorrect ? '🎉' : '😢');
+  document.getElementById('feedback-text').textContent = isTimeout
+    ? '時間到！'
+    : (isCorrect ? `答對了！+${points} 分` : '答錯了～');
+  document.getElementById('feedback-text').style.color = isCorrect ? 'var(--correct)' : 'var(--wrong)';
+  document.getElementById('feedback-fact').innerHTML = '💡 <strong>你知道嗎？</strong><br>' + question.fact;
+
+  const isLast = gameState.currentQuestionIndex >= gameState.quizQuestions.length - 1;
+  document.getElementById('feedback-btn').textContent = isLast ? '🏁 看結果' : '下一題 →';
+}
+
+function nextQuestion() {
+  gameState.currentQuestionIndex++;
+  if (gameState.currentQuestionIndex >= gameState.quizQuestions.length) {
+    finishContinent();
+  } else {
+    showQuestion();
+  }
+}
+
+// =============================================
+// CONTINENT COMPLETE
+// =============================================
+function finishContinent() {
+  clearInterval(gameState.timerInterval);
+  const continent = CONTINENTS.find(c => c.id === gameState.currentContinent);
+  const team = gameState.teams[gameState.currentTeam];
+
+  // Record completion
+  if (team) {
+    team.completedContinents[gameState.currentContinent] = {
+      score: gameState.currentScore,
+      time: new Date().toISOString()
+    };
+    team.totalScore += gameState.currentScore;
+    team.progress = (Object.keys(team.completedContinents).length / TOTAL_CONTINENTS) * 100;
+  }
+
+  // Generate completion code
+  const code = gameState.currentContinent.substring(0,2).toUpperCase() + '-' + gameState.currentTeam + '-' + gameState.currentScore;
+
+  document.getElementById('complete-icon').textContent = continent.emoji;
+  document.getElementById('complete-title').textContent = continent.name + ' 闖關成功！';
+  document.getElementById('complete-score').textContent = '本站得分：' + gameState.currentScore + ' 分 ⭐';
+  document.getElementById('complete-code').textContent = code;
+
+  showScreen('continent-complete');
+  launchConfetti();
+  saveState();
+
+  // Check if all continents done
+  if (team && Object.keys(team.completedContinents).length >= TOTAL_CONTINENTS) {
+    setTimeout(() => {
+      showVictory();
+    }, 3000);
+  }
+}
+
+function backToStudentMap() {
+  buildStudentMap();
+  showScreen('student-map');
+}
+
+// =============================================
+// TEACHER DASHBOARD
+// =============================================
+function buildDashboard() {
+  // Build continent map
+  const mapEl = document.getElementById('continent-map-teacher');
+  mapEl.innerHTML = CONTINENTS.map(c => `
+    <div class="continent-card" data-continent="${c.id}" onclick="showQRForContinent('${c.id}')">
+      <div class="continent-emoji">${c.emoji}</div>
+      <div class="continent-name">${c.name}</div>
+      <div class="continent-countries">${c.countries}</div>
+    </div>
+  `).join('');
+
+  // Build team select dropdown
+  const teamSelect = document.getElementById('confirm-team-select');
+  teamSelect.innerHTML = TEAMS.map(t => `<option value="${t.id}">${t.emoji} ${t.name}</option>`).join('');
+
+  updateLeaderboard();
+}
+
+function updateLeaderboard() {
+  const lb = document.getElementById('leaderboard');
+  const sorted = Object.values(gameState.teams).sort((a, b) => b.totalScore - a.totalScore || b.progress - a.progress);
+
+  lb.innerHTML = sorted.map((team, idx) => {
+    const barColor = team.color;
+    const pct = team.progress;
+    const stamps = CONTINENTS.map(c => {
+      const done = team.completedContinents[c.id];
+      return `<div class="stamp ${done ? 'completed' : ''}" data-c="${c.id}" title="${c.name}">${c.emoji}</div>`;
+    }).join('');
+
+    return `
+      <div class="team-row" style="border-left:4px solid ${team.color};">
+        <div class="team-row-header">
+          <span class="team-row-name">${team.emoji} ${team.name}</span>
+          <span class="team-row-score">⭐ ${team.totalScore}</span>
+        </div>
+        <div class="hp-bar-bg">
+          <div class="hp-bar-text">${Math.round(pct)}%</div>
+          <div class="hp-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${team.color},${team.color}dd);"></div>
+        </div>
+        <div class="team-stamps">${stamps}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function manualConfirm() {
+  const teamId = document.getElementById('confirm-team-select').value;
+  const continentId = document.getElementById('confirm-continent-select').value;
+  const score = parseInt(document.getElementById('confirm-score').value) || 500;
+
+  const team = gameState.teams[teamId];
+  if (!team) return;
+
+  if (!team.completedContinents[continentId]) {
+    team.completedContinents[continentId] = { score: score, time: new Date().toISOString() };
+    team.totalScore += score;
+    team.progress = (Object.keys(team.completedContinents).length / TOTAL_CONTINENTS) * 100;
+  }
+
+  updateLeaderboard();
+  saveState();
+  document.getElementById('confirm-score').value = '';
+
+  // Check for winner
+  if (team.progress >= 100) {
+    setTimeout(() => {
+      showVictory();
+    }, 1000);
+  }
+}
+
+// =============================================
+// QR CODE GENERATION
+// =============================================
+function showQRModal() {
+  const modal = document.getElementById('qr-modal');
+  modal.classList.add('active');
+  generateAllQRCodes();
+}
+
+function closeQRModal() {
+  document.getElementById('qr-modal').classList.remove('active');
+}
+
+function showQRForContinent(id) {
+  showQRModal();
+}
+
+function generateAllQRCodes() {
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+
+  const baseUrl = window.location.origin + window.location.pathname;
+
+  CONTINENTS.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'qr-item';
+    item.innerHTML = `<div id="qr-${c.id}"></div><div class="qr-label" style="color:${c.color}">${c.emoji} ${c.name}</div><div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">${c.countries}</div>`;
+    grid.appendChild(item);
+
+    const url = baseUrl + '?c=' + c.id;
+    setTimeout(() => {
+      const qrContainer = document.getElementById('qr-' + c.id);
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: url,
+        width: 160,
+        height: 160,
+        colorDark: '#ffffff',
+        colorLight: '#1b2838',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }, 100);
+  });
+}
+
+function printQRCodes() {
+  window.print();
+}
+
+// =============================================
+// VICTORY
+// =============================================
+function showVictory() {
+  const sorted = Object.values(gameState.teams).sort((a, b) => b.totalScore - a.totalScore);
+  const winner = sorted[0];
+
+  document.getElementById('victory-team').innerHTML = `<span style="color:${winner.color}">${winner.emoji} ${winner.name}</span><br><span style="font-size:1rem;color:var(--gold);">總分 ${winner.totalScore} 分</span>`;
+
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
+  document.getElementById('final-standings').innerHTML = sorted.map((t, i) => `
+    <div class="final-row" style="${i===0?'background:rgba(245,200,66,0.15);border:2px solid var(--gold);':''}">
+      <span class="final-rank">${medals[i]}</span>
+      <div class="final-info">
+        <div class="final-name" style="color:${t.color}">${t.emoji} ${t.name}</div>
+        <div class="final-pts">⭐ ${t.totalScore} 分 · ${Object.keys(t.completedContinents).length}/${TOTAL_CONTINENTS} 洲</div>
+      </div>
+    </div>
+  `).join('');
+
+  showScreen('victory-screen');
+  launchConfetti();
+}
+
+// =============================================
+// EFFECTS
+// =============================================
+function playSound(isCorrect) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.value = 0.15;
+    if (isCorrect) {
+      osc.frequency.value = 523;
+      osc.start();
+      setTimeout(() => { osc.frequency.value = 659; }, 100);
+      setTimeout(() => { osc.frequency.value = 784; }, 200);
+      setTimeout(() => { osc.stop(); ctx.close(); }, 400);
+    } else {
+      osc.frequency.value = 200;
+      osc.type = 'sawtooth';
+      osc.start();
+      setTimeout(() => { osc.frequency.value = 150; }, 150);
+      setTimeout(() => { osc.stop(); ctx.close(); }, 300);
+    }
+  } catch(e) {}
+}
+
+function launchConfetti() {
+  const colors = ['#e74c3c','#3498db','#2ecc71','#f1c40f','#9b59b6','#e67e22','#1abc9c','#ff6b9d'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.width = (Math.random() * 10 + 5) + 'px';
+      piece.style.height = (Math.random() * 10 + 5) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 4000);
+    }, i * 30);
+  }
+}
+
+// =============================================
+// STATE PERSISTENCE (localStorage)
+// =============================================
+function saveState() {
+  try {
+    localStorage.setItem('kingdomStore', JSON.stringify({
+      roomCode: gameState.roomCode,
+      teams: gameState.teams
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('kingdomStore');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.teams) {
+        Object.keys(data.teams).forEach(id => {
+          if (gameState.teams[id]) {
+            Object.assign(gameState.teams[id], data.teams[id]);
+          }
+        });
+      }
+      if (data.roomCode) gameState.roomCode = data.roomCode;
+    }
+  } catch(e) {}
+}
+
+function resetGame() {
+  if (!confirm('確定要重置所有隊伍的分數和進度嗎？')) return;
+  initTeams();
+  saveState();
+  updateLeaderboard();
+}
+
+// =============================================
+// AUTO-REFRESH LEADERBOARD
+// =============================================
+setInterval(() => {
+  if (document.getElementById('teacher-dashboard').classList.contains('active')) {
+    loadState();
+    updateLeaderboard();
+  }
+}, 3000);
+
+// =============================================
+// INIT
+// =============================================
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+
+  // Check URL params
+  const params = new URLSearchParams(window.location.search);
+  const continent = params.get('c');
+
+  if (continent && QUESTIONS[continent]) {
+    // Student scanned QR code for specific continent
+    gameState.currentContinent = continent;
+    buildTeamGrid();
+    showScreen('team-select');
+  }
+});
+</script>
+</body>
+</html>
